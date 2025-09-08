@@ -5898,5 +5898,19 @@ function toggleCollapsible(element) {
             printWindow.print();
         }
     </script>
+	<script>
+function sendHeight() {
+  var h = document.documentElement.scrollHeight || document.body.scrollHeight;
+  parent.postMessage({ type: 'setHeight', height: h }, '*'); // для безопасности можно заменить '*' на конкретный origin Тильды
+}
+
+window.addEventListener('load', sendHeight);
+window.addEventListener('resize', sendHeight);
+
+// если внутреннее содержимое динамическое, наблюдаем за изменениями
+var mo = new MutationObserver(sendHeight);
+mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+</script>
 </body>
+
 </html>
