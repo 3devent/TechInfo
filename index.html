@@ -1,19 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<script>
-function sendHeight() {
-  var h = document.documentElement.scrollHeight || document.body.scrollHeight;
-  parent.postMessage({ type: 'setHeight', height: h }, '*'); // для безопасности можно заменить '*' на конкретный origin Тильды
-}
-
-window.addEventListener('load', sendHeight);
-window.addEventListener('resize', sendHeight);
-
-// если внутреннее содержимое динамическое, наблюдаем за изменениями
-var mo = new MutationObserver(sendHeight);
-mo.observe(document.body, { childList: true, subtree: true, attributes: true });
-</script>
 <meta name="description" content="Профессиональный справочник техника по концертному свету. DMX протоколы, световое оборудование, риггинг, спецэффекты.">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -5911,7 +5898,21 @@ function toggleCollapsible(element) {
             printWindow.print();
         }
     </script>
+	<script>
+function sendHeight() {
+  var h = document.documentElement.scrollHeight || document.body.scrollHeight;
+  parent.postMessage({ type: 'setHeight', height: h }, '*'); // для безопасности можно заменить '*' на конкретный origin Тильды
+}
+
+window.addEventListener('load', sendHeight);
+window.addEventListener('resize', sendHeight);
+
+// если внутреннее содержимое динамическое, наблюдаем за изменениями
+var mo = new MutationObserver(sendHeight);
+mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+</script>
 </body>
 
 </html>
+
 
