@@ -22,6 +22,9 @@
             --success-border: #10b981;
             --info-bg: #dbeafe;
             --info-border: #3b82f6;
+            --table-text: #1f2937;
+            --code-bg: #f3f4f6;
+            --code-text: #1f2937;
         }
 
         [data-theme="dark"] {
@@ -40,6 +43,9 @@
             --success-border: #34d399;
             --info-bg: #1e3a8a;
             --info-border: #60a5fa;
+            --table-text: #f1f5f9;
+            --code-bg: #0f172a;
+            --code-text: #f1f5f9;
         }
 
         * {
@@ -158,6 +164,7 @@
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: background 0.2s;
+            color: var(--text-color);
         }
 
         .search-result-item:hover {
@@ -304,6 +311,7 @@
             cursor: pointer;
             transition: background 0.2s;
             font-weight: 500;
+            color: var(--text-color);
         }
 
         .mobile-nav-item:hover {
@@ -381,6 +389,24 @@
             font-size: 1.1rem;
         }
 
+        /* Fix for paragraphs and lists in dark mode */
+        .card p, .card li, .card span {
+            color: var(--text-color);
+        }
+
+        /* Fix for code blocks */
+        pre, code {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        pre {
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
         /* Collapsible */
         .collapsible {
             cursor: pointer;
@@ -422,6 +448,7 @@
             margin: 1rem 0;
             border-left: 4px solid;
             position: relative;
+            color: var(--text-color);
         }
 
         .alert-warning {
@@ -448,18 +475,21 @@
             display: block;
             margin-bottom: 0.5rem;
             font-size: 1.05rem;
+            color: var(--text-color);
         }
 
-        /* Tables */
+        /* Tables - Fixed for mobile */
         .table-container {
             overflow-x: auto;
             margin: 1rem 0;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
+            min-width: 600px;
             border-collapse: collapse;
             background: var(--bg-color);
         }
@@ -468,6 +498,7 @@
             padding: 0.75rem;
             text-align: left;
             border: 1px solid var(--border-color);
+            color: var(--table-text);
         }
 
         th {
@@ -476,6 +507,7 @@
             font-weight: 600;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
 
         tr:nth-child(even) {
@@ -503,6 +535,7 @@
             cursor: pointer;
             transition: all 0.3s;
             font-size: 0.85rem;
+            color: var(--text-color);
         }
 
         .glossary-filter button:hover,
@@ -561,6 +594,7 @@
             margin-left: 0;
             font-size: 0.9rem;
             line-height: 1.4;
+            color: var(--text-color);
         }
 
         .term-category {
@@ -593,6 +627,7 @@
 
         .calc-input label {
             font-weight: 500;
+            color: var(--text-color);
         }
 
         .calc-input input, 
@@ -635,6 +670,7 @@
             margin-top: 1rem;
             font-weight: 500;
             border: 1px solid var(--success-border);
+            color: var(--text-color);
         }
 
         /* Notes */
@@ -813,6 +849,7 @@
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
+            color: var(--text-color);
         }
 
         .quiz-option:hover {
@@ -838,6 +875,7 @@
             background: var(--info-bg);
             border-radius: 6px;
             display: none;
+            color: var(--text-color);
         }
 
         .quiz-result.show {
@@ -872,6 +910,7 @@
             cursor: pointer;
             transition: all 0.3s;
             user-select: none;
+            color: var(--text-color);
         }
 
         .checklist li:hover {
@@ -916,6 +955,10 @@
             border-color: var(--primary-color);
         }
 
+        .brand-card p, .brand-card li {
+            color: var(--text-color);
+        }
+
         .brand-logo {
             width: 100px;
             height: 100px;
@@ -954,6 +997,7 @@
             font-size: 0.85rem;
             cursor: pointer;
             transition: all 0.2s;
+            color: var(--text-color);
         }
 
         .dmx-channel:hover {
@@ -1015,6 +1059,10 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
+        .timeline-content p {
+            color: var(--text-color);
+        }
+
         .timeline-time {
             font-weight: bold;
             color: var(--primary-color);
@@ -1071,6 +1119,7 @@
             margin-bottom: 1rem;
             border-bottom: 2px solid var(--border-color);
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab {
@@ -1113,6 +1162,7 @@
             justify-content: space-between;
             margin-bottom: 0.5rem;
             font-size: 0.9rem;
+            color: var(--text-color);
         }
 
         .progress-bar {
@@ -1154,7 +1204,7 @@
             background: var(--success-border);
         }
 
-        /* Responsive Design */
+        /* Responsive Design - Enhanced for mobile */
         @media (max-width: 768px) {
             body {
                 padding-top: 50px;
@@ -1209,6 +1259,23 @@
                 border-radius: 8px;
             }
 
+            /* Fix tables for mobile */
+            .table-container {
+                margin: 1rem -0.5rem;
+                border-radius: 0;
+            }
+
+            table {
+                font-size: 0.85rem;
+                min-width: 500px;
+            }
+
+            th, td {
+                padding: 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            /* Fix glossary grid for mobile */
             .glossary-grid {
                 grid-template-columns: 1fr;
             }
@@ -1217,30 +1284,75 @@
                 grid-template-columns: 1fr;
             }
 
+            /* Fix calculator inputs for mobile */
             .calc-input {
                 grid-template-columns: 1fr;
+                gap: 0.5rem;
             }
 
+            .calc-input label {
+                font-size: 0.9rem;
+            }
+
+            /* Fix notes panel for mobile */
             .notes-panel {
                 width: calc(100vw - 40px);
                 right: -10px;
+                max-width: 350px;
             }
 
-            .table-container {
-                font-size: 0.85rem;
-            }
-
-            th, td {
-                padding: 0.5rem;
-            }
-
+            /* Fix DMX grid for mobile */
             .dmx-grid {
                 grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+                gap: 0.3rem;
+                padding: 0.75rem;
             }
 
+            .dmx-channel {
+                font-size: 0.75rem;
+            }
+
+            /* Fix tabs for mobile */
             .tabs {
                 flex-wrap: nowrap;
                 overflow-x: auto;
+                scrollbar-width: thin;
+            }
+
+            .tab {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            /* Fix timeline for mobile */
+            .timeline-item {
+                padding-left: 40px;
+            }
+
+            .timeline::before {
+                left: 10px;
+            }
+
+            .timeline-item::before {
+                left: 1px;
+                width: 18px;
+                height: 18px;
+            }
+
+            /* Fix progress bars for mobile */
+            .progress-label {
+                font-size: 0.85rem;
+            }
+
+            /* Fix checklist for mobile */
+            .checklist li {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .checklist input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
             }
         }
 
@@ -1263,6 +1375,32 @@
 
             .card h3 {
                 font-size: 1rem;
+            }
+
+            .card h4 {
+                font-size: 0.95rem;
+            }
+
+            /* Even smaller tables on very small screens */
+            table {
+                min-width: 400px;
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 0.4rem;
+                font-size: 0.8rem;
+            }
+
+            /* Adjust buttons for small screens */
+            .calc-button {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .glossary-filter button {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.8rem;
             }
         }
 
@@ -1297,6 +1435,10 @@
             .collapsible-content {
                 max-height: none !important;
                 opacity: 1 !important;
+            }
+
+            table {
+                min-width: 100%;
             }
         }
 
@@ -5934,6 +6076,7 @@ function toggleCollapsible(element) {
 </body>
 
 </html>
+
 
 
 
