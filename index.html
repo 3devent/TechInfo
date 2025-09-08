@@ -5898,21 +5898,42 @@ function toggleCollapsible(element) {
             printWindow.print();
         }
     </script>
-	<script>
-function sendHeight() {
-  var h = document.documentElement.scrollHeight || document.body.scrollHeight;
-  parent.postMessage({ type: 'setHeight', height: h }, '*'); // для безопасности можно заменить '*' на конкретный origin Тильды
-}
+<script>
+(function(){
+  function getHeight(){
+    return Math.max(
+      document.documentElement.scrollHeight,
+      document.documentElement.offsetHeight,
+      document.body ? document.body.scrollHeight : 0,
+      document.body ? document.body.offsetHeight : 0
+    );
+  }
+  function sendHeight(){
+    var h = getHeight();
+    // пробуем посылать и в parent, и в top
+    try{ parent.postMessage({type:'setHeight', height: h}, '*'); }catch(e){}
+    try{ top.postMessage({type:'setHeight', height: h}, '*'); }catch(e){}
+    console.log('[iframe] sent height', h);
+  }
 
-window.addEventListener('load', sendHeight);
-window.addEventListener('resize', sendHeight);
+  window.addEventListener('load', sendHeight);
+  window.addEventListener('resize', sendHeight);
 
-// если внутреннее содержимое динамическое, наблюдаем за изменениями
-var mo = new MutationObserver(sendHeight);
-mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+  // наблюдаем за изменениями контента
+  var mo = new MutationObserver(sendHeight);
+  mo.observe(document.documentElement || document.body, { childList:true, subtree:true, attributes:true });
+
+  // на всякий случай шлём периодически первые 5 секунд
+  var t0 = Date.now();
+  var ping = setInterval(function(){
+    if(Date.now() - t0 > 5000) return clearInterval(ping);
+    sendHeight();
+  }, 500);
+})();
 </script>
 </body>
 
 </html>
+
 
 
