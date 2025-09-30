@@ -3,14 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Календарь — весь экран</title>
+  <title>Календарь — без прокрутки</title>
   <style>
     :root {
-      --vh: 1vh; /* JS-фоллбэк: 1% реальной высоты окна */
+      --vh: 1vh; /* JS-фоллбэк 1% видимой высоты */
       --bg: #0b0c0f;
+
+      /* Базовая внутренняя «логическая» ширина календаря, от которой считаем масштаб.
+         У Яндекс.Календаря месячный вид комфортно читается от ~980–1200px.
+         Возьмём 1024px как опорную. */
+      --base-width: 1024;
     }
 
-    /* Сброс и базовые стили */
     html, body {
       height: 100%;
       margin: 0;
@@ -19,81 +23,109 @@
       overscroll-behavior: none;
     }
 
-    /* Корневой контейнер без рамок и футера */
+    /* Контейнер на весь экран, без обрамления и футера */
     .app {
-      /* Основной способ — динамическая высота вьюпорта */
-      height: 100dvh;
-      /* Фоллбэк для старых браузеров */
-      height: calc(var(--vh) * 100);
+      height: 100dvh;                 /* основное: динамическая высота */
+      height: calc(var(--vh) * 100);  /* фоллбэк для старых браузеров */
       width: 100%;
-      display: grid;
-      grid-template-rows: 1fr;
-      /* Без внешних отступов/рамок — «без фрейма» */
       padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
                env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
       box-sizing: border-box;
-      background: #0f1117; /* фон на всю страницу */
+      background: #0f1117;
+      display: grid;
+      place-items: center;             /* центрируем содержимое после масштабирования */
     }
 
-    /* В портретной ориентации — обязательно на весь экран */
-    @media screen and (orientation: portrait) {
-      .app {
-        height: 100dvh;
-        height: calc(var(--vh) * 100);
-      }
+    /* Обёртка, которая будет скейлиться так, чтобы целиком влезала по ширине */
+    .scaled-wrap {
+      position: relative;
+      /* Логические размеры исходного фрейма до масштабирования */
+      width: calc(var(--base-width) * 1px);
+      /* Высота задаётся как доля экрана: займём полноэкранную высоту */
+      height: calc(var(--vh) * 100);
+      height: 100dvh;
+      overflow: clip;
+      transform-origin: top left;
+      /* Масштаб рассчитывается через CSS с использованием текущей ширины окна (vw).
+         Формула: scale = min(1, viewportWidth / baseWidth).
+         В calc нельзя напрямую делить px на px, поэтому используем дробные единицы:
+         100vw — это ширина вьюпорта, transform поддерживает переменную ниже,
+         которую мы ставим из JS для максимальной точности на iOS/старых браузерах. */
     }
 
-    /* Контейнер под календарь без «рамки» и прокрутки снаружи */
+    /* Значение масштаба по умолчанию через 100vw (переопределится JS‑переменной) */
+    .scaled-wrap {
+      --vwpx: 100vw;
+      /* Опорный расчёт масштаба: ограничиваем 1, чтобы на больших экранах не растягивать */
+      --scale: min(1, calc((var(--vwpx)) / (var(--base-width) * 1px)));
+      transform: scale(var(--scale));
+    }
+
+    /* Контейнер iframe реальных размеров до масштабирования */
     .calendar {
       position: relative;
       width: 100%;
       height: 100%;
-      overflow: clip;
       background: #0f1117;
     }
 
-    /* Сам календарь: растянуть ровно на экран, без границ */
     .calendar > iframe {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      border: 0;               /* убрать рамку */
-      background: #fff;        /* фон виджета */
+      border: 0;                  /* без рамки */
+      background: #fff;
+      /* Отрубим внутренние полосы прокрутки, если провайдер пытается их показать */
+      overflow: hidden;
       overscroll-behavior: contain;
     }
 
-    /* На десктопах можно ограничить высоту, если нужно (не обязательно) */
+    /* Только портрет: гарантируем расчёт «во весь экран» */
+    @media screen and (orientation: portrait) {
+      .app { height: 100dvh; height: calc(var(--vh) * 100); }
+    }
+
+    /* Десктопы и ландшафт — отключаем масштаб, чтобы не выглядело «ужатым» */
     @media (min-width: 1024px) and (orientation: landscape) {
-      .app {
-        height: 100vh;  /* на десктопах vh стабильнее */
+      .scaled-wrap {
+        --scale: 1;
+        height: min(85vh, 900px);
+        height: min(85dvh, 900px);
       }
     }
   </style>
 
   <script>
-    // JS-фоллбэк для корректной высоты на мобильных (фикс 100vh)
+    // Фоллбэк для корректной высоты на мобильных: --vh = innerHeight / 100.
+    // Плюс устанавливаем --vwpx в реальных пикселях, чтобы точнее посчитать масштаб
+    // и исключить влияние плавающих адресных панелей и зумирования.
     (function() {
-      function setVH() {
+      function setViewportVars() {
         var vh = window.innerHeight * 0.01;
+        var vw = window.innerWidth; // пиксели устройства
         document.documentElement.style.setProperty('--vh', vh + 'px');
+        document.documentElement.style.setProperty('--vwpx', vw + 'px');
       }
-      setVH();
-      window.addEventListener('resize', setVH, { passive: true });
-      window.addEventListener('orientationchange', setVH, { passive: true });
+      setViewportVars();
+      window.addEventListener('resize', setViewportVars, { passive: true });
+      window.addEventListener('orientationchange', setViewportVars, { passive: true });
     })();
   </script>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Календарь на весь экран">
-    <div class="calendar">
-      <iframe
-        src="https://calendar.yandex.ru/embed/month?private_token=60dc2986fd011ad112334068ba1429c715c3c6df&tz_id=Europe/Moscow"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-        allowtransparency="true"
-        title="Яндекс.Календарь — месячный вид"
-      ></iframe>
+  <div class="app" role="application" aria-label="Календарь на весь экран, без внутренней прокрутки">
+    <!-- Обёртка логического размера 1024px по ширине будет уменьшаться под экран -->
+    <div class="scaled-wrap">
+      <div class="calendar">
+        <iframe
+          src="https://calendar.yandex.ru/embed/month?private_token=60dc2986fd011ad112334068ba1429c715c3c6df&tz_id=Europe/Moscow"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowtransparency="true"
+          title="Яндекс.Календарь — месячный вид"
+        ></iframe>
+      </div>
     </div>
   </div>
 </body>
