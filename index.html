@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Встроенный Яндекс.Календарь — Месяц</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Яндекс.Календарь — адаптивная встройка</title>
   <style>
     :root {
       --bg: #0b0c0f;
@@ -12,7 +12,7 @@
       --muted: #9aa3b2;
       --accent: #3b82f6;
       --border: #1e2230;
-      --radius: 12px;
+      --vh: 1vh; /* JS-фоллбэк: 1% видимой высоты */
     }
 
     html, body {
@@ -20,7 +20,9 @@
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none; /* уменьшаем «резинку» на мобилках */
     }
 
     .page {
@@ -30,7 +32,7 @@
     }
 
     header {
-      padding: 16px 20px;
+      padding: 12px 16px calc(12px + env(safe-area-inset-top, 0px));
       border-bottom: 1px solid var(--border);
       background: linear-gradient(180deg, rgba(59,130,246,0.08), rgba(0,0,0,0));
     }
@@ -45,7 +47,7 @@
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 12px 16px;
       width: 100%;
       box-sizing: border-box;
     }
@@ -53,18 +55,18 @@
     .card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0,0,0,0.25);
     }
 
     .card-header {
-      padding: 14px 16px;
+      padding: 10px 12px;
       display: flex;
       align-items: center;
       gap: 10px;
       border-bottom: 1px solid var(--border);
-      background: radial-gradient(1200px 200px at 20% -50%, rgba(59,130,246,0.15), transparent);
+      background: radial-gradient(1000px 180px at 15% -40%, rgba(59,130,246,0.15), transparent);
     }
 
     .dot {
@@ -81,20 +83,25 @@
       color: var(--muted);
     }
 
-    /* Адаптивный контейнер для iframe */
+    /* Важный блок: высота календаря на мобильных */
+    .calendar-wrap {
+      /* Основной способ: реальная динамическая высота вьюпорта */
+      height: 100dvh;
+      /* Фоллбэк для старых браузеров — переменная от JS */
+      height: calc(var(--vh) * 100);
+      /* Запас под шапку страницы, если нужен — можно убрать/скорректировать */
+      /* margin-top: 8px; */
+      display: grid;
+      grid-template-rows: 1fr;
+      overflow: clip;
+    }
+
     .yc-embed {
       position: relative;
       width: 100%;
-      /* Соотношение сторон: можно корректировать под дизайн */
-      aspect-ratio: 16 / 11;
+      height: 100%;
       background: #0f1117;
-    }
-
-    /* Фоллбэк, если браузер не поддерживает aspect-ratio */
-    .yc-embed::before {
-      content: "";
-      display: block;
-      padding-bottom: calc(100% * 11 / 16);
+      overflow: clip; /* предотвращает появление двойного скролла */
     }
 
     .yc-embed > iframe {
@@ -104,33 +111,38 @@
       height: 100%;
       border: 0;
       background: #fff;
-    }
-
-    /* Тонкая прокрутка, если появится внутренняя */
-    .yc-embed > iframe {
-      scrollbar-width: thin;
-      scrollbar-color: #475569 #0b0c0f;
+      overscroll-behavior: contain; /* уменьшаем скролл‑чейнинг внутри iframe */
     }
 
     footer {
       color: var(--muted);
-      padding: 16px 20px;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
       border-top: 1px solid var(--border);
       font-size: 12px;
       text-align: center;
     }
 
-    /* Мобильные корректировки высоты */
-    @media (max-width: 768px) {
-      .yc-embed { aspect-ratio: 4 / 5; }
-      .yc-embed::before { padding-bottom: calc(100% * 5 / 4); }
-    }
-
-    @media (max-width: 480px) {
-      .yc-embed { aspect-ratio: 3 / 5; }
-      .yc-embed::before { padding-bottom: calc(100% * 5 / 3); }
+    /* Десктоп: можно ограничить высоту блока, чтобы не занимал всю страницу */
+    @media (min-width: 1024px) {
+      .calendar-wrap {
+        height: min(85dvh, 900px);
+        height: min(85vh, 900px); /* доп. фоллбэк */
+      }
     }
   </style>
+
+  <script>
+    // JS-фоллбэк: корректирует --vh в старых браузерах (iOS < 15.4, старый Chrome/Android).
+    (function() {
+      function setVH() {
+        var vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', vh + 'px');
+      }
+      setVH();
+      window.addEventListener('resize', setVH, { passive: true });
+      window.addEventListener('orientationchange', setVH, { passive: true });
+    })();
+  </script>
 </head>
 <body>
   <div class="page">
@@ -146,21 +158,24 @@
           <span class="dot"></span>
           <p class="card-title">Яндекс.Календарь (Europe/Moscow)</p>
         </div>
-        <div class="yc-embed">
-          <iframe
-            src="https://calendar.yandex.ru/embed/month?private_token=60dc2986fd011ad112334068ba1429c715c3c6df&tz_id=Europe/Moscow"
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            allowtransparency="true"
-          ></iframe>
+
+        <div class="calendar-wrap">
+          <div class="yc-embed">
+            <iframe
+              src="https://calendar.yandex.ru/embed/month?private_token=60dc2986fd011ad112334068ba1429c715c3c6df&tz_id=Europe/Moscow"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              allowtransparency="true"
+              title="Яндекс.Календарь — месячный вид"
+            ></iframe>
+          </div>
         </div>
       </section>
     </main>
 
     <footer>
-      Встраивание выполнено через iframe, как рекомендует справка Яндекс.Календаря; вид «месяц» и параметр tz_id передаются в URL [web:7][web:2].
+      Встроено через iframe по спецификации HTML; высота фиксируется 100dvh с JS‑фоллбэком, скролл‑чейнинг снижен через overscroll‑behavior [web:73][web:75][web:71].
     </footer>
   </div>
 </body>
 </html>
-
