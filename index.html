@@ -3,69 +3,138 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Календарь — без прокрутки, адаптивно</title>
+  <title>Календарь: неделя • месяц • год</title>
   <style>
-    :root {
-      /* JS-фоллбэк: 1% реальной высоты окна, будет заменён JS */
-      --vh: 1vh; /* корректирует «100vh-баг» на мобайле */ /* [web:10] */
-      /* Точный viewport width в px для масштабирования логической ширины */
-      --vwpx: 100vw; /* будет заменено JS на window.innerWidth */ /* [web:10] */
-      /* Опорная «логическая» ширина макета для масштабирования */
-      --base-width: 1024;
+    :root{
+      /* JS-фоллбэк: 1% видимой высоты окна */
+      --vh: 1vh;
+      /* Точный viewport width в px для масштабирования логической ширины (если нужно) */
+      --vwpx: 100vw;
+      /* Базовая ширина для масштабирования контента на очень узких экранах */
+      --base-width: 420; /* портретная «логическая» ширина */
       --bg: #0b0c0f;
+      --panel: #131722;
+      --panel-2: #0f1117;
+      --txt: #e6e9ef;
+      --muted: #a5adba;
+      --accent: #4f8cff;
+      --accent-2: #7aa2ff;
+      --stroke: #1f2430;
+      --radius: 14px;
+      --btn-h: 44px;
     }
 
-    html, body {
-      height: 100%; /* совместимость с моб. браузерами и вложенными 100% */ /* [web:5] */
+    html, body{
+      height: 100%;
       margin: 0;
       background: var(--bg);
+      color: var(--txt);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior: none;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     }
 
-    /* Область приложения — заполняет весь видимый экран, без внешней прокрутки */
-    .app {
-      /* Новый стандартный путь: динамическая высота */
-      height: 100dvh; /* учитывает панель адреса при сворачивании/разворачивании */ /* [web:21] */
-      /* Фоллбэк для браузеров без dvh: точная высота по innerHeight */
-      height: calc(var(--vh) * 100); /* устойчивая высота «как видно на экране» */ /* [web:7] */
+    /* Вся страница — на весь видимый экран */
+    .page{
+      height: 100dvh;              /* динамическая высота */
+      height: calc(var(--vh) * 100); /* устойчивый фоллбэк для моб. браузеров */
       width: 100%;
-
-      /* Учёт вырезов/чёлок; в портрете может быть 0px — это норма */
-      padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
-               env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); /* [web:22] */
-
-      box-sizing: border-box;
       display: grid;
-      place-items: center;
-      background: #0f1117;
-      overflow: hidden; /* исключаем прокрутку корневой обёртки */ /* [web:10] */
+      grid-template-rows: auto 1fr auto;
+      padding:
+        env(safe-area-inset-top, 0px)
+        env(safe-area-inset-right, 0px)
+        env(safe-area-inset-bottom, 0px)
+        env(safe-area-inset-left, 0px);
+      box-sizing: border-box;
+      gap: 10px;
+      background: var(--panel-2);
+      overflow: hidden;
     }
 
-    /* Логическая сцена до масштабирования */
-    .scaled-wrap {
-      position: relative;
-      width: calc(var(--base-width) * 1px);
-      /* Высота сцены равна видимой высоте экрана */
-      height: 100dvh; /* основной путь */ /* [web:21] */
-      height: calc(var(--vh) * 100); /* фоллбэк через JS-переменную */ /* [web:10] */
-
-      overflow: clip;
-      transform-origin: top left;
-
-      /* Масштаб по ширине: min(1, viewportWidth / baseWidth) */
-      --scale: min(1, calc(var(--vwpx) / (var(--base-width) * 1)));
-      transform: scale(var(--scale));
+    /* Верхняя панель с переключателями */
+    .topbar{
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--stroke);
     }
 
-    .calendar {
+    .brand{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .brand .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: radial-gradient(65% 65% at 50% 50%, var(--accent) 0%, var(--accent-2) 100%);
+      box-shadow: 0 0 20px rgba(79,140,255,0.4);
+      flex: 0 0 auto;
+    }
+    .brand .title{
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      color: var(--txt);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .view-switch{
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--stroke);
+      border-radius: calc(var(--btn-h) / 2);
+      display: grid;
+      grid-auto-flow: column;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      height: var(--btn-h);
+    }
+    .view-switch button{
+      appearance: none;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 18px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: color .2s ease, background-color .2s ease;
+      outline: none;
+      white-space: nowrap;
+    }
+    .view-switch button[aria-pressed="true"]{
+      background: linear-gradient(180deg, rgba(79,140,255,0.18) 0%, rgba(79,140,255,0.14) 100%);
+      color: var(--txt);
+      box-shadow: inset 0 0 0 1px rgba(79,140,255,0.35);
+    }
+    .view-switch button:active{
+      transform: translateY(1px);
+    }
+
+    /* Область календаря — растягивается */
+    .calendar-wrap{
       position: relative;
-      width: 100%;
+      min-height: 0; /* важно для grid child with overflow */
       height: 100%;
-      background: #0f1117;
+      width: 100%;
+      background: var(--panel-2);
+      border-top: 1px solid var(--stroke);
+      border-bottom: 1px solid var(--stroke);
+      overflow: hidden;
     }
-
-    .calendar > iframe {
+    .calendar-iframe{
       position: absolute;
       inset: 0;
       width: 100%;
@@ -76,65 +145,132 @@
       overscroll-behavior: contain;
     }
 
-    /* Портрет: заполняем весь экран (повтор высоты для надёжности) */
-    @media screen and (orientation: portrait) {
-      .app { height: 100dvh; height: calc(var(--vh) * 100); } /* [web:21] */
-      .scaled-wrap { height: 100dvh; height: calc(var(--vh) * 100); } /* [web:10] */
+    /* Нижняя строка статуса/подсказки */
+    .statusbar{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      background: var(--panel);
+      border-top: 1px solid var(--stroke);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* Десктоп/ландшафт: можно ограничить высоту, если нужно */
-    @media (min-width: 1024px) and (orientation: landscape) {
-      .scaled-wrap {
-        --scale: 1;
-        height: min(85dvh, 900px); /* «мягкое» ограничение на больших экранах */ /* [web:21] */
-        height: min(calc(var(--vh) * 85), 900px); /* фоллбэк */ /* [web:10] */
+    /* Портрет — дефолт */
+    @media (orientation: portrait){
+      .page{
+        height: 100dvh;
+        height: calc(var(--vh) * 100);
       }
     }
 
-    /* Прогрессивное улучшение для старых iOS WebKit: */
-    @supports (-webkit-touch-callout: none) {
-      /* Можно подсобить телу избегать «лишней» прокрутки в ряде случаев */
-      body { min-height: 100%; } /* помогает с jumpy layout у части устройств */ /* [web:7] */
+    /* Небольшая типографика для очень узких экранов */
+    @media (max-width: 360px){
+      .view-switch button{
+        padding: 0 10px;
+        height: 34px;
+      }
     }
   </style>
-
   <script>
-    // Устанавливаем точные переменные для устойчивого масштаба/высоты
-    (function() {
-      function setViewportVars() {
-        // 1% от видимой высоты окна
-        var vh = window.innerHeight * 0.01; // учитывает адресные панели динамически /* [web:10] */
-        // Точная ширина окна для масштабирования макета
-        var vw = window.innerWidth; /* [web:10] */
-
+    // Устойчивые единицы высоты на мобильных: обновляем --vh и --vwpx
+    (function(){
+      function setViewportVars(){
+        var vh = window.innerHeight * 0.01;
+        var vw = window.innerWidth;
         var root = document.documentElement;
         root.style.setProperty('--vh', vh + 'px');
         root.style.setProperty('--vwpx', vw);
       }
-
-      // Инициализация и реакция на изменения
-      setViewportVars(); // при загрузке /* [web:10] */
-      window.addEventListener('resize', setViewportVars, { passive: true }); // при ресайзе/rotation /* [web:13] */
-      window.addEventListener('orientationchange', setViewportVars, { passive: true }); // смена ориентации /* [web:13] }
-
-      // iOS Safari иногда меняет доступную высоту при появлении клавиатуры/панелей —
-      // можно дополнительно слушать события фокуса/blur при необходимости.
+      setViewportVars();
+      window.addEventListener('resize', setViewportVars, { passive: true });
+      window.addEventListener('orientationchange', setViewportVars, { passive: true });
     })();
+
+    // Конфигурация источника Яндекс.Календаря:
+    const YA_BASE = 'https://calendar.yandex.ru/embed';
+    // Из запроса: private_token и tz_id нужно сохранить во всех режимах
+    const YA_TOKEN = '60dc2986fd011ad112334068ba1429c715c3c6df';
+    const YA_TZ = 'Europe/Moscow';
+
+    // Соответствие наших режимов именам путей виджета:
+    // В iFrame-embed у Яндекса доступны режимы /week, /month, /year для разных представлений.
+    // Ссылку формируем как: https://calendar.yandex.ru/embed/<view>?private_token=...&tz_id=...
+    // Источник: «Календарь на вашем сайте» — виджет календаря поддерживает выбор вида и параметры через URL. [web:31]
+    function buildSrc(view){
+      // защита от неожиданных значений
+      const v = (view === 'week' || view === 'month' || view === 'year') ? view : 'month';
+      return `${YA_BASE}/${v}?private_token=${encodeURIComponent(YA_TOKEN)}&tz_id=${encodeURIComponent(YA_TZ)}`;
+    }
+
+    // Инициализация переключателей
+    document.addEventListener('DOMContentLoaded', function(){
+      const iframe = document.getElementById('yc-frame');
+      const buttons = Array.from(document.querySelectorAll('[data-view]'));
+      let current = 'month';
+
+      function setView(v){
+        if(v === current) return;
+        current = v;
+        // Обновляем src iframe на соответствующий режим
+        iframe.src = buildSrc(v);
+        // Обновляем aria-pressed для кнопок
+        buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+        // Лёгкий визуальный «селектор»
+        const status = document.getElementById('status');
+        status.textContent = v === 'week' ? 'Режим: Неделя'
+                           : v === 'year' ? 'Режим: Год'
+                           : 'Режим: Месяц';
+      }
+
+      // Начальная загрузка — месяц
+      iframe.src = buildSrc(current);
+      buttons.forEach(b=>{
+        b.addEventListener('click', ()=>{
+          setView(b.dataset.view);
+        }, { passive: true });
+      });
+      // Установим aria-pressed исходно
+      buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === current)));
+    });
   </script>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Календарь — все элементы помещаются на экране">
-    <div class="scaled-wrap" aria-hidden="false">
-      <div class="calendar">
-        <iframe
-          src="https://calendar.yandex.ru/embed/month?private_token=60dc2986fd011ad112334068ba1429c715c3c6df&tz_id=Europe/Moscow"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          allowtransparency="true"
-          title="Яндекс.Календарь — месячный вид"
-        ></iframe>
+  <div class="page" role="application" aria-label="Календарь: неделя — месяц — год">
+    <header class="topbar">
+      <div class="brand" aria-label="Заголовок">
+        <div class="dot" aria-hidden="true"></div>
+        <div class="title">Календарь: неделя • месяц • год</div>
       </div>
-    </div>
+      <nav class="view-switch" role="tablist" aria-label="Переключение вида">
+        <button type="button" role="tab" data-view="week" aria-pressed="false" aria-label="Неделя">Неделя</button>
+        <button type="button" role="tab" data-view="month" aria-pressed="true" aria-label="Месяц">Месяц</button>
+        <button type="button" role="tab" data-view="year" aria-pressed="false" aria-label="Год">Год</button>
+      </nav>
+    </header>
+
+    <main class="calendar-wrap">
+      <iframe
+        id="yc-frame"
+        class="calendar-iframe"
+        title="Яндекс.Календарь — переключаемые режимы неделя/месяц/год"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowtransparency="true"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+      ></iframe>
+    </main>
+
+    <footer class="statusbar">
+      <div id="status">Режим: Месяц</div>
+      <div aria-hidden="true">TZ: Europe/Moscow</div>
+    </footer>
   </div>
 </body>
 </html>
