@@ -3,16 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Календарь — без прокрутки</title>
+  <title>Календарь — без прокрутки, адаптивно</title>
   <style>
     :root {
-      --vh: 1vh; /* JS-фоллбэк 1% видимой высоты */
-      --bg: #0b0c0f;
-
-      /* Базовая внутренняя «логическая» ширина календаря, от которой считаем масштаб.
-         У Яндекс.Календаря месячный вид комфортно читается от ~980–1200px.
-         Возьмём 1024px как опорную. */
+      --vh: 1vh;     /* JS-фоллбэк: 1% реальной высоты окна */
+      --vwpx: 100vw; /* будет заменено JS на точные px */
+      /* Опорная «логическая» ширина, от которой считаем масштаб.
+         Для месячного вида комфортно 980–1200px; возьмём 1024. */
       --base-width: 1024;
+      --bg: #0b0c0f;
     }
 
     html, body {
@@ -23,45 +22,33 @@
       overscroll-behavior: none;
     }
 
-    /* Контейнер на весь экран, без обрамления и футера */
+    /* Область отображения — на весь экран, без рамок/футера */
     .app {
-      height: 100dvh;                 /* основное: динамическая высота */
-      height: calc(var(--vh) * 100);  /* фоллбэк для старых браузеров */
+      height: 100dvh;                 /* основная единица */
+      height: calc(var(--vh) * 100);  /* фоллбэк */
       width: 100%;
       padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
                env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
       box-sizing: border-box;
-      background: #0f1117;
       display: grid;
-      place-items: center;             /* центрируем содержимое после масштабирования */
+      place-items: center;
+      background: #0f1117;
     }
 
-    /* Обёртка, которая будет скейлиться так, чтобы целиком влезала по ширине */
+    /* Логические размеры до масштабирования */
     .scaled-wrap {
       position: relative;
-      /* Логические размеры исходного фрейма до масштабирования */
       width: calc(var(--base-width) * 1px);
-      /* Высота задаётся как доля экрана: займём полноэкранную высоту */
       height: calc(var(--vh) * 100);
       height: 100dvh;
       overflow: clip;
       transform-origin: top left;
-      /* Масштаб рассчитывается через CSS с использованием текущей ширины окна (vw).
-         Формула: scale = min(1, viewportWidth / baseWidth).
-         В calc нельзя напрямую делить px на px, поэтому используем дробные единицы:
-         100vw — это ширина вьюпорта, transform поддерживает переменную ниже,
-         которую мы ставим из JS для максимальной точности на iOS/старых браузерах. */
-    }
 
-    /* Значение масштаба по умолчанию через 100vw (переопределится JS‑переменной) */
-    .scaled-wrap {
-      --vwpx: 100vw;
-      /* Опорный расчёт масштаба: ограничиваем 1, чтобы на больших экранах не растягивать */
-      --scale: min(1, calc((var(--vwpx)) / (var(--base-width) * 1px)));
+      /* Масштаб: min(1, viewportWidth / baseWidth) */
+      --scale: min(1, calc(var(--vwpx) / (var(--base-width) * 1)));
       transform: scale(var(--scale));
     }
 
-    /* Контейнер iframe реальных размеров до масштабирования */
     .calendar {
       position: relative;
       width: 100%;
@@ -74,19 +61,18 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      border: 0;                  /* без рамки */
+      border: 0;
       background: #fff;
-      /* Отрубим внутренние полосы прокрутки, если провайдер пытается их показать */
       overflow: hidden;
       overscroll-behavior: contain;
     }
 
-    /* Только портрет: гарантируем расчёт «во весь экран» */
+    /* Портрет: обязательно занимать весь экран */
     @media screen and (orientation: portrait) {
       .app { height: 100dvh; height: calc(var(--vh) * 100); }
     }
 
-    /* Десктопы и ландшафт — отключаем масштаб, чтобы не выглядело «ужатым» */
+    /* Десктоп/ландшафт: без масштабирования или с мягким ограничением */
     @media (min-width: 1024px) and (orientation: landscape) {
       .scaled-wrap {
         --scale: 1;
@@ -95,17 +81,14 @@
       }
     }
   </style>
-
   <script>
-    // Фоллбэк для корректной высоты на мобильных: --vh = innerHeight / 100.
-    // Плюс устанавливаем --vwpx в реальных пикселях, чтобы точнее посчитать масштаб
-    // и исключить влияние плавающих адресных панелей и зумирования.
+    // Устанавливаем точные переменные для устойчивого масштаба/высоты
     (function() {
       function setViewportVars() {
         var vh = window.innerHeight * 0.01;
-        var vw = window.innerWidth; // пиксели устройства
+        var vw = window.innerWidth; // точная ширина в px
         document.documentElement.style.setProperty('--vh', vh + 'px');
-        document.documentElement.style.setProperty('--vwpx', vw + 'px');
+        document.documentElement.style.setProperty('--vwpx', vw);
       }
       setViewportVars();
       window.addEventListener('resize', setViewportVars, { passive: true });
@@ -114,8 +97,7 @@
   </script>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Календарь на весь экран, без внутренней прокрутки">
-    <!-- Обёртка логического размера 1024px по ширине будет уменьшаться под экран -->
+  <div class="app" role="application" aria-label="Календарь — все элементы помещаются на экране">
     <div class="scaled-wrap">
       <div class="calendar">
         <iframe
