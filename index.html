@@ -3,136 +3,76 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Яндекс.Календарь — адаптивная встройка</title>
+  <title>Календарь — весь экран</title>
   <style>
     :root {
+      --vh: 1vh; /* JS-фоллбэк: 1% реальной высоты окна */
       --bg: #0b0c0f;
-      --card: #12141a;
-      --text: #e7e9ee;
-      --muted: #9aa3b2;
-      --accent: #3b82f6;
-      --border: #1e2230;
-      --vh: 1vh; /* JS-фоллбэк: 1% видимой высоты */
     }
 
+    /* Сброс и базовые стили */
     html, body {
       height: 100%;
       margin: 0;
       background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
       -webkit-tap-highlight-color: transparent;
-      overscroll-behavior-y: none; /* уменьшаем «резинку» на мобилках */
+      overscroll-behavior: none;
     }
 
-    .page {
-      min-height: 100%;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-    }
-
-    header {
-      padding: 12px 16px calc(12px + env(safe-area-inset-top, 0px));
-      border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(59,130,246,0.08), rgba(0,0,0,0));
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 12px 16px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    }
-
-    .card-header {
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 1px solid var(--border);
-      background: radial-gradient(1000px 180px at 15% -40%, rgba(59,130,246,0.15), transparent);
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
-    }
-
-    .card-title {
-      margin: 0;
-      font-size: 15px;
-      color: var(--muted);
-    }
-
-    /* Важный блок: высота календаря на мобильных */
-    .calendar-wrap {
-      /* Основной способ: реальная динамическая высота вьюпорта */
+    /* Корневой контейнер без рамок и футера */
+    .app {
+      /* Основной способ — динамическая высота вьюпорта */
       height: 100dvh;
-      /* Фоллбэк для старых браузеров — переменная от JS */
+      /* Фоллбэк для старых браузеров */
       height: calc(var(--vh) * 100);
-      /* Запас под шапку страницы, если нужен — можно убрать/скорректировать */
-      /* margin-top: 8px; */
+      width: 100%;
       display: grid;
       grid-template-rows: 1fr;
-      overflow: clip;
+      /* Без внешних отступов/рамок — «без фрейма» */
+      padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px)
+               env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+      box-sizing: border-box;
+      background: #0f1117; /* фон на всю страницу */
     }
 
-    .yc-embed {
+    /* В портретной ориентации — обязательно на весь экран */
+    @media screen and (orientation: portrait) {
+      .app {
+        height: 100dvh;
+        height: calc(var(--vh) * 100);
+      }
+    }
+
+    /* Контейнер под календарь без «рамки» и прокрутки снаружи */
+    .calendar {
       position: relative;
       width: 100%;
       height: 100%;
+      overflow: clip;
       background: #0f1117;
-      overflow: clip; /* предотвращает появление двойного скролла */
     }
 
-    .yc-embed > iframe {
+    /* Сам календарь: растянуть ровно на экран, без границ */
+    .calendar > iframe {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      border: 0;
-      background: #fff;
-      overscroll-behavior: contain; /* уменьшаем скролл‑чейнинг внутри iframe */
+      border: 0;               /* убрать рамку */
+      background: #fff;        /* фон виджета */
+      overscroll-behavior: contain;
     }
 
-    footer {
-      color: var(--muted);
-      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid var(--border);
-      font-size: 12px;
-      text-align: center;
-    }
-
-    /* Десктоп: можно ограничить высоту блока, чтобы не занимал всю страницу */
-    @media (min-width: 1024px) {
-      .calendar-wrap {
-        height: min(85dvh, 900px);
-        height: min(85vh, 900px); /* доп. фоллбэк */
+    /* На десктопах можно ограничить высоту, если нужно (не обязательно) */
+    @media (min-width: 1024px) and (orientation: landscape) {
+      .app {
+        height: 100vh;  /* на десктопах vh стабильнее */
       }
     }
   </style>
 
   <script>
-    // JS-фоллбэк: корректирует --vh в старых браузерах (iOS < 15.4, старый Chrome/Android).
+    // JS-фоллбэк для корректной высоты на мобильных (фикс 100vh)
     (function() {
       function setVH() {
         var vh = window.innerHeight * 0.01;
@@ -145,37 +85,16 @@
   </script>
 </head>
 <body>
-  <div class="page">
-    <header>
-      <div class="container">
-        <h1>Календарь — месячный вид</h1>
-      </div>
-    </header>
-
-    <main class="container">
-      <section class="card">
-        <div class="card-header">
-          <span class="dot"></span>
-          <p class="card-title">Яндекс.Календарь (Europe/Moscow)</p>
-        </div>
-
-        <div class="calendar-wrap">
-          <div class="yc-embed">
-            <iframe
-              src="https://calendar.yandex.ru/embed/month?private_token=60dc2986fd011ad112334068ba1429c715c3c6df&tz_id=Europe/Moscow"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              allowtransparency="true"
-              title="Яндекс.Календарь — месячный вид"
-            ></iframe>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer>
-      Встроено через iframe по спецификации HTML; высота фиксируется 100dvh с JS‑фоллбэком, скролл‑чейнинг снижен через overscroll‑behavior [web:73][web:75][web:71].
-    </footer>
+  <div class="app" role="application" aria-label="Календарь на весь экран">
+    <div class="calendar">
+      <iframe
+        src="https://calendar.yandex.ru/embed/month?private_token=60dc2986fd011ad112334068ba1429c715c3c6df&tz_id=Europe/Moscow"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowtransparency="true"
+        title="Яндекс.Календарь — месячный вид"
+      ></iframe>
+    </div>
   </div>
 </body>
 </html>
